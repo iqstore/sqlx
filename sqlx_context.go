@@ -279,6 +279,11 @@ func (tx *Tx) NamedExecContext(ctx context.Context, query string, arg interface{
 	return NamedExecContext(ctx, tx, query, arg)
 }
 
+// PrepareNamedContext returns an sqlx.NamedStmt
+func (tx *Tx) PrepareNamedContext(ctx context.Context, query string) (*NamedStmt, error) {
+	return prepareNamedContext(ctx, tx, query)
+}
+
 // SelectContext using the prepared statement.
 // Any placeholder parameters are replaced with supplied args.
 func (s *Stmt) SelectContext(ctx context.Context, dest interface{}, args ...interface{}) error {
