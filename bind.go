@@ -16,6 +16,14 @@ const (
 	QUESTION
 	DOLLAR
 	NAMED
+
+	// Oracle only supports named type bind variables even for the positional ones.
+	// But it does not allow reserved keywords to be used in the bind variables,
+	// and there is no way to quote them as column identifiers.
+	// Fortunately, so we can append "_" to every named variable,
+	// because Oracle still *treats* them as positional, i.e. their names do not matter.
+	// Example mapping: admin => admin_
+	NAMED_UNDERSCORE
 )
 
 // BindType returns the bindtype for a given database given a drivername.
@@ -28,7 +36,7 @@ func BindType(driverName string) int {
 	case "sqlite3":
 		return QUESTION
 	case "oci8", "ora", "goracle":
-		return NAMED
+		return NAMED_UNDERSCORE
 	case "mssql":
 		return QUESTION
 	}

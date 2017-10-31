@@ -273,7 +273,6 @@ func compileNamedQuery(qs []byte, bindType int) (query string, names []string, e
 			names = append(names, string(name))
 			// add a proper bindvar for the bindType
 			switch bindType {
-			// oracle only supports named type bind vars even for positional
 			case NAMED:
 				rebound = append(rebound, ':')
 				rebound = append(rebound, name...)
@@ -285,6 +284,13 @@ func compileNamedQuery(qs []byte, bindType int) (query string, names []string, e
 					rebound = append(rebound, byte(b))
 				}
 				currentVar++
+			case NAMED_UNDERSCORE:
+				// Oracle only supports named type bind vars even for positional.
+				// See comment in the NAMED_UNDERSCORE const declaration.
+				rebound = append(rebound, ':')
+				rebound = append(rebound, name...)
+				rebound = append(rebound, '_')
+
 			}
 			// add this byte to string unless it was not part of the name
 			if i != last {
