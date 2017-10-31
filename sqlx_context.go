@@ -70,7 +70,7 @@ func PreparexContext(ctx context.Context, p PreparerContext, query string) (*Stm
 	if err != nil {
 		return nil, err
 	}
-	return &Stmt{Stmt: s, unsafe: isUnsafe(p), Mapper: mapperFor(p)}, err
+	return &Stmt{Stmt: s, unsafe: isUnsafe(p), Mapper: mapperFor(p), ColumnMapper: columnMapperFor(p)}, err
 }
 
 // GetContext does a QueryRow using the provided Queryer, and scans the
@@ -162,14 +162,14 @@ func (db *DB) QueryxContext(ctx context.Context, query string, args ...interface
 	if err != nil {
 		return nil, err
 	}
-	return &Rows{Rows: r, unsafe: db.unsafe, Mapper: db.Mapper}, err
+	return &Rows{Rows: r, unsafe: db.unsafe, Mapper: db.Mapper, ColumnMapper: db.ColumnMapper}, err
 }
 
 // QueryRowxContext queries the database and returns an *sqlx.Row.
 // Any placeholder parameters are replaced with supplied args.
 func (db *DB) QueryRowxContext(ctx context.Context, query string, args ...interface{}) *Row {
 	rows, err := db.DB.QueryContext(ctx, query, args...)
-	return &Row{rows: rows, err: err, unsafe: db.unsafe, Mapper: db.Mapper}
+	return &Row{rows: rows, err: err, unsafe: db.unsafe, Mapper: db.Mapper, ColumnMapper: db.ColumnMapper}
 }
 
 // MustBeginTx starts a transaction, and panics on error.  Returns an *sqlx.Tx instead
@@ -205,7 +205,7 @@ func (db *DB) BeginTxx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Tx{Tx: tx, driverName: db.driverName, unsafe: db.unsafe, Mapper: db.Mapper}, err
+	return &Tx{Tx: tx, driverName: db.driverName, unsafe: db.unsafe, Mapper: db.Mapper, ColumnMapper: db.ColumnMapper}, err
 }
 
 // StmtxContext returns a version of the prepared statement which runs within a
@@ -224,7 +224,7 @@ func (tx *Tx) StmtxContext(ctx context.Context, stmt interface{}) *Stmt {
 	default:
 		panic(fmt.Sprintf("non-statement type %v passed to Stmtx", reflect.ValueOf(stmt).Type()))
 	}
-	return &Stmt{Stmt: tx.StmtContext(ctx, s), Mapper: tx.Mapper}
+	return &Stmt{Stmt: tx.StmtContext(ctx, s), Mapper: tx.Mapper, ColumnMapper: tx.ColumnMapper}
 }
 
 // NamedStmtContext returns a version of the prepared statement which runs
@@ -250,7 +250,7 @@ func (tx *Tx) QueryxContext(ctx context.Context, query string, args ...interface
 	if err != nil {
 		return nil, err
 	}
-	return &Rows{Rows: r, unsafe: tx.unsafe, Mapper: tx.Mapper}, err
+	return &Rows{Rows: r, unsafe: tx.unsafe, Mapper: tx.Mapper, ColumnMapper: tx.ColumnMapper}, err
 }
 
 // SelectContext within a transaction and context.
@@ -270,7 +270,7 @@ func (tx *Tx) GetContext(ctx context.Context, dest interface{}, query string, ar
 // Any placeholder parameters are replaced with supplied args.
 func (tx *Tx) QueryRowxContext(ctx context.Context, query string, args ...interface{}) *Row {
 	rows, err := tx.Tx.QueryContext(ctx, query, args...)
-	return &Row{rows: rows, err: err, unsafe: tx.unsafe, Mapper: tx.Mapper}
+	return &Row{rows: rows, err: err, unsafe: tx.unsafe, Mapper: tx.Mapper, ColumnMapper: tx.ColumnMapper}
 }
 
 // NamedExecContext using this Tx.
@@ -327,12 +327,12 @@ func (q *qStmt) QueryxContext(ctx context.Context, query string, args ...interfa
 	if err != nil {
 		return nil, err
 	}
-	return &Rows{Rows: r, unsafe: q.Stmt.unsafe, Mapper: q.Stmt.Mapper}, err
+	return &Rows{Rows: r, unsafe: q.Stmt.unsafe, Mapper: q.Stmt.Mapper, ColumnMapper: q.ColumnMapper}, err
 }
 
 func (q *qStmt) QueryRowxContext(ctx context.Context, query string, args ...interface{}) *Row {
 	rows, err := q.Stmt.QueryContext(ctx, args...)
-	return &Row{rows: rows, err: err, unsafe: q.Stmt.unsafe, Mapper: q.Stmt.Mapper}
+	return &Row{rows: rows, err: err, unsafe: q.Stmt.unsafe, Mapper: q.Stmt.Mapper, ColumnMapper: q.ColumnMapper}
 }
 
 func (q *qStmt) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
